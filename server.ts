@@ -7,6 +7,26 @@ import { Effect } from "effect"
 import { SqlClient } from "@effect/sql"
 import { SqlLive } from "./lib/db"
 
+/* TODOS
+
+- [X] Add a resolver for the `findById` query
+- [ ] Add a resolver for the `findAll` query
+   # add offset and limit. Only tickets with parentId = null should be returned.
+- [ ] Add a resolver for the `createTicket` mutation
+- [ ] Add a resolver for the `toggleTicket` mutation
+- [ ] Add a resolver for the `deleteTicket` mutation
+
+- [X] Add parent/child relations
+
+- [ ] Add a resolver for the `setParentOfTicket` mutation
+    # the ticket with id: childId gets the ticket with id: parentId as its new parent
+- [ ] Add a resolver for the `removeParentFromTicket` mutation.
+    # the ticket with the given id becomes a root level ticket
+- [ ] Add a resolver for the `addChildrenToTicket` mutation.
+    # every children in childrenIds gets their parent set as parentId
+
+*/
+
 const baseSchema = makeExecutableSchema({ typeDefs, resolvers })
 const schema = enableEffectResolvers(baseSchema)
 
