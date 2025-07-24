@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "effect-service-only",
+      "description": "All services must be defined using Effect.Service, not Context.Tag or Layer.succeed.",
+      "enforce": true
+    },
+    {
+      "id": "arrow-functions-only",
+      "description": "All functions (including service methods) must be defined as arrow functions assigned to consts (const fn = () => { ... }). No function declarations or class methods.",
+      "enforce": true
+    },
+    {
+      "id": "no-class-methods",
+      "description": "Do not use class methods for services or business logic. Use plain objects with arrow functions.",
+      "enforce": true
+    },
+    {
+      "id": "no-context-tag-for-services",
+      "description": "Do not use Context.Tag for service definitions. Use Effect.Service instead.",
+      "enforce": true
+    },
+    {
+      "id": "no-layer-succeed-for-services",
+      "description": "Do not use Layer.succeed for service definitions. Use Effect.Service instead.",
+      "enforce": true
+    }
+  ]
+} 

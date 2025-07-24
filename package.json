@@ -1,0 +1,35 @@
+{
+  "name": "effect-graphql-drizzle",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx server.ts",
+    "dev": "tsx watch server.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:drop": "npx rimraf ticket.db",
+    "db:reset": "npm run db:drop && npm run db:seed"
+  },
+  "keywords": [],
+  "author": "Martin Linde Persson",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@effect/platform": "^0.89.0",
+    "@effect/platform-node": "^0.92.0",
+    "@effect/schema": "^0.75.5",
+    "@effect/sql": "^0.43.0",
+    "@effect/sql-drizzle": "^0.42.0",
+    "@effect/sql-sqlite-node": "^0.44.0",
+    "@graphql-tools/schema": "^10.0.25",
+    "@graphql-tools/utils": "^10.9.1",
+    "apollo-server": "^3.13.0",
+    "drizzle-orm": "^0.44.3",
+    "effect": "^3.17.0",
+    "graphql": "^16.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}
