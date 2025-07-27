@@ -5,3 +5,15 @@ export class TicketNotFoundError extends Data.TaggedError("TicketNotFoundError")
     super()
   }
 }
+
+export class TicketCreationError extends Data.TaggedError("TicketCreationError")<{}> {
+  constructor(readonly message: string = "Ticket creation failed") {
+    super()
+  }
+}
+
+export class NoTicketsFoundError extends Data.TaggedError("NoTicketsFoundError")<{}> {
+  constructor(readonly message: string = "No tickets found") {
+    super()
+  }
+}

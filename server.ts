@@ -10,9 +10,9 @@ import { SqlLive } from "./lib/db"
 /* TODOS
 
 - [X] Add a resolver for the `findById` query
-- [ ] Add a resolver for the `findAll` query
+- [X] Add a resolver for the `findAll` query
    # add offset and limit. Only tickets with parentId = null should be returned.
-- [ ] Add a resolver for the `createTicket` mutation
+- [X] Add a resolver for the `createTicket` mutation
 - [ ] Add a resolver for the `toggleTicket` mutation
 - [ ] Add a resolver for the `deleteTicket` mutation
 

@@ -13,3 +13,13 @@ export const TicketIdSchema = Schema.NumberFromString.pipe(
 export const FindTicketByIdInput = Schema.Struct({
   id: TicketIdSchema,
 })
+
+export const CreateTicketInput = Schema.Struct({
+  title: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(255), Schema.annotations({ description: "Ticket title" })),
+  description: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(1000), Schema.annotations({ description: "Ticket description" })),
+})
+
+export const FindAllTicketsInput = Schema.Struct({
+  offset: Schema.Number.pipe(Schema.nonNegative(), Schema.annotations({ description: "Offset" })),
+  limit: Schema.Number.pipe(Schema.nonNegative(), Schema.annotations({ description: "Limit" })),
+})
