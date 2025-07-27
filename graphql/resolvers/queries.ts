@@ -15,7 +15,7 @@ export const queries = {
 
       return yield* service.findAll(decoded).pipe(
         Effect.map((tickets) => ({
-          message: `Found ${tickets.length} tickets`,
+          message: `Found ${tickets.length} tickets with ${tickets.reduce((acc, ticket) => acc + ticket.children.length, 0)} children`,
           data: tickets,
         })),
         Effect.andThen((result) => {
@@ -61,10 +61,11 @@ export const queries = {
       yield* Effect.logInfo(`Resolving ticket by ID: ${decoded.id}`)
       return yield* service.findById(decoded.id).pipe(
         Effect.map((ticket) => ({
-          message: `Found ticket with ID ${ticket.id}`,
+          message: `Found ticket with ID ${ticket.id} with ${ticket.children.length} children`,
           data: ticket,
         })),
         Effect.andThen((result) => {
+          console.log("result", JSON.stringify(result, null, 2))
           return successResponse(result.data, result.message)
         })
       )

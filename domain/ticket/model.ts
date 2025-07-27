@@ -12,3 +12,7 @@ export const tickets = D.sqliteTable("tickets", {
 })
 
 export type Ticket = typeof tickets.$inferSelect
+
+export type TicketWithChildren = Ticket & {
+  children: TicketWithChildren[]
+}
