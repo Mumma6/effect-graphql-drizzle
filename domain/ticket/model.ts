@@ -10,3 +10,5 @@ export const tickets = D.sqliteTable("tickets", {
   updatedAt: D.integer("updatedAt", { mode: "timestamp" }).notNull(),
   parentId: D.integer("parentId").references((): AnySQLiteColumn => tickets.id),
 })
+
+export type Ticket = typeof tickets.$inferSelect

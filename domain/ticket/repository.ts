@@ -3,8 +3,7 @@ import * as SqliteDrizzle from "@effect/sql-drizzle/Sqlite"
 import { eq, isNull } from "drizzle-orm"
 import { DatabaseLive } from "../../lib/db"
 import { tickets } from "../ticket"
-import { TicketId } from "./schema"
-import { NoTicketsFoundError } from "../errors"
+import { CreateTicketInput, FindAllTicketsInput, TicketId, ToggleTicketInput } from "./schema"
 
 export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket/Repo", {
   effect: Effect.gen(function* () {
@@ -17,14 +16,21 @@ export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket
       })
     }
 
-    const createTicket = (title: string, description: string) => {
+    const findChildren = (id: TicketId) => {
+      return Effect.gen(function* () {
+        const rowsResult = yield* db.select().from(tickets).where(eq(tickets.parentId, id))
+        return Option.fromNullable(rowsResult)
+      })
+    }
+
+    const createTicket = (input: typeof CreateTicketInput.Type) => {
       return Effect.gen(function* () {
         const now = new Date()
         const result = yield* db
           .insert(tickets)
           .values({
-            title,
-            description,
+            title: input.title,
+            description: input.description,
             completed: false,
             createdAt: now,
             updatedAt: now,
@@ -42,13 +48,20 @@ export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket
       })
     }
 
-    const findAll = (offset: number, limit: number) => {
+    const findAll = (input: typeof FindAllTicketsInput.Type) => {
       return Effect.gen(function* () {
-        const result = yield* db.select().from(tickets).where(isNull(tickets.parentId)).limit(limit).offset(offset)
+        const result = yield* db.select().from(tickets).where(isNull(tickets.parentId)).limit(input.limit).offset(input.offset)
         if (result.length === 0) {
           return yield* Option.none()
         }
         return Option.some(result)
+      })
+    }
+
+    const toggleTicket = (input: typeof ToggleTicketInput.Type) => {
+      return Effect.gen(function* () {
+        const result = yield* db.update(tickets).set({ completed: input.isCompleted }).where(eq(tickets.id, input.id)).returning()
+        return Option.fromNullable(result[0])
       })
     }
 
@@ -57,6 +70,8 @@ export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket
       createTicket,
       deleteTicket,
       findAll,
+      toggleTicket,
+      findChildren,
     } as const
   }),
   dependencies: [DatabaseLive],

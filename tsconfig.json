@@ -10,7 +10,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
+  
   },
   "include": ["**/*.ts"]
 }

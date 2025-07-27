@@ -23,3 +23,8 @@ export const FindAllTicketsInput = Schema.Struct({
   offset: Schema.Number.pipe(Schema.nonNegative(), Schema.annotations({ description: "Offset" })),
   limit: Schema.Number.pipe(Schema.nonNegative(), Schema.annotations({ description: "Limit" })),
 })
+
+export const ToggleTicketInput = Schema.Struct({
+  id: TicketIdSchema,
+  isCompleted: Schema.Boolean.pipe(Schema.annotations({ description: "Is completed" })),
+})

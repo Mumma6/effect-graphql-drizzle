@@ -1,17 +1,29 @@
 export const typeDefs = `#graphql
   type Query {
-    findAll(offset: Int, limit: Int): FindAllResult!
-    findById(id: ID!): FindByIdResult!
+    findAll(input: FindAllTicketsInput!): FindAllResponse!
+    findById(id: ID!): Response!
   }
 
   type Mutation {
-    createTicket(input: CreateTicketInput!): CreateTicketResult!
+    createTicket(input: CreateTicketInput!): CreateTicketResponse!
+    toggleTicket(input: ToggleTicketInput!): Response!
   }
 
-  type CreateTicketResult {
+  type Response {
     success: Boolean!
     data: Ticket
     message: String
+  }
+
+  type FindAllResponse {
+    success: Boolean!
+    data: [Ticket!]!
+    message: String
+  }
+
+  input FindAllTicketsInput {
+    offset: Int!
+    limit: Int!
   }
 
   input CreateTicketInput {
@@ -19,16 +31,9 @@ export const typeDefs = `#graphql
     description: String!
   }
 
-  type FindByIdResult {
-    success: Boolean!
-    data: Ticket
-    message: String
-  }
-
-  type FindAllResult {
-    success: Boolean!
-    data: [Ticket!]!
-    message: String
+  input ToggleTicketInput {
+    id: ID!
+    isCompleted: Boolean!
   }
 
   type Ticket {
@@ -38,4 +43,19 @@ export const typeDefs = `#graphql
     parentId: ID
     children: [Ticket!]!
   }
+
+  type CreatedTicket {
+    id: ID!
+    title: String!
+    description: String!
+    completed: Boolean!
+    parentId: ID
+  }
+
+  type CreateTicketResponse {
+    success: Boolean!
+    data: Ticket!
+    message: String
+  }
+
 `

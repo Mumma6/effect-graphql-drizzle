@@ -13,10 +13,13 @@ import { SqlLive } from "./lib/db"
 - [X] Add a resolver for the `findAll` query
    # add offset and limit. Only tickets with parentId = null should be returned.
 - [X] Add a resolver for the `createTicket` mutation
-- [ ] Add a resolver for the `toggleTicket` mutation
+- [X] Add a resolver for the `toggleTicket` mutation
 - [ ] Add a resolver for the `deleteTicket` mutation
 
+- [X] Make sure the findAll and findById queries return the children aswell, not just the ticket itself. The children should be returned as a list of tickets but they are not part of the DB model
+
 - [X] Add parent/child relations
+  
 
 - [ ] Add a resolver for the `setParentOfTicket` mutation
     # the ticket with id: childId gets the ticket with id: parentId as its new parent
