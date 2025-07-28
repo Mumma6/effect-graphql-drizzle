@@ -33,6 +33,7 @@ export class TicketService extends Effect.Service<TicketService>()("Ticket/Servi
         })
       )
 
+    // testa skriva om denna med en Map istället för att mutera ticket.children
     const findChildrenBFS = (rootTicket: Ticket, maxDepth = 10) =>
       Effect.gen(function* () {
         const queue = yield* Queue.unbounded<TicketWithChildren>()
@@ -64,26 +65,44 @@ export class TicketService extends Effect.Service<TicketService>()("Ticket/Servi
         return withChildren
       })
 
+    const flattenTree = (node: TicketWithChildren): Ticket[] => {
+      return [node, ...node.children.flatMap(flattenTree)]
+    }
+
     const toggleTicket = (input: typeof ToggleTicketInput.Type) =>
       Effect.gen(function* () {
         yield* Effect.logInfo(`Toggling ticket with ID: ${input.id} to ${input.isCompleted}`)
 
-        return yield* Effect.flatMap(
-          repository.toggleTicket(input),
-          Option.match({
-            onNone: () =>
-              Effect.gen(function* () {
-                yield* Effect.logWarning(`No ticket found with ID ${input.id}`)
-                return yield* Effect.fail(new TicketNotFoundError(`Failed to toggle ticket with ID ${input.id}`))
-              }),
-            onSome: (ticket) =>
-              Effect.gen(function* () {
-                yield* Effect.logInfo(`Toggled ticket with ID ${ticket.id} to ${ticket.completed}`)
-                return ticket
-              }),
-          })
+        const toggled = yield* repository.toggleTicket(input).pipe(
+          Effect.flatMap(
+            Option.match({
+              onNone: () =>
+                Effect.gen(function* () {
+                  yield* Effect.logWarning(`No ticket found with ID ${input.id}`)
+                  return yield* Effect.fail(new TicketNotFoundError(`Failed to toggle ticket with ID ${input.id}`))
+                }),
+              onSome: Effect.succeed,
+            })
+          )
         )
-      }).pipe(Effect.flatMap((ticket) => findChildrenBFS(ticket)))
+
+        const tree = yield* findChildrenBFS(toggled)
+        const allTickets = flattenTree(tree)
+
+        yield* Effect.logInfo(`Toggling ${allTickets.length} tickets to ${input.isCompleted}`)
+
+        yield* Effect.forEach(
+          allTickets,
+          (ticket) =>
+            Effect.gen(function* () {
+              yield* Effect.logInfo(`Toggling ticket ${ticket.id} to ${input.isCompleted}`)
+              yield* repository.toggleTicket({ id: ticket.id as TicketId, isCompleted: input.isCompleted })
+            }),
+          { concurrency: 5 }
+        )
+
+        return tree
+      })
 
     const findById = (id: TicketId) =>
       Effect.gen(function* () {

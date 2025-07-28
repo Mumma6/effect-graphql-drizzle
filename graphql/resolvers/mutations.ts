@@ -13,7 +13,7 @@ export const mutations = {
 
       return yield* service.toggleTicket(decoded).pipe(
         Effect.map((ticket) => ({
-          message: `Updated ticket with ID ${ticket.id} to completed: ${ticket.completed}`,
+          message: `Updated ticket with ID ${ticket.id} to completed: ${ticket.completed} and all children`,
           data: ticket,
         })),
         Effect.andThen((result) => {
