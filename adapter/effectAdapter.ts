@@ -4,8 +4,9 @@ import { GraphQLSchema } from "graphql"
 import { SqlLive } from "../lib/db"
 import { TicketRepositoryLive } from "../domain/ticket/repository"
 import { TicketServiceLive } from "../domain/ticket/service"
+import { HelperServiceLive } from "../domain/ticket/helpers"
 
-const AppLayer = Layer.mergeAll(SqlLive, TicketRepositoryLive, TicketServiceLive)
+const AppLayer = Layer.mergeAll(SqlLive, TicketRepositoryLive, TicketServiceLive, HelperServiceLive)
 
 export const enableEffectResolvers = (schema: GraphQLSchema) => {
   return mapSchema(schema, {

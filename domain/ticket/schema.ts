@@ -28,3 +28,7 @@ export const ToggleTicketInput = Schema.Struct({
   id: TicketIdSchema,
   isCompleted: Schema.Boolean.pipe(Schema.annotations({ description: "Is completed" })),
 })
+
+export const DeleteTicketInput = Schema.Struct({
+  id: TicketIdSchema,
+})

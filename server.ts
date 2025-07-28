@@ -7,27 +7,62 @@ import { Effect } from "effect"
 import { SqlClient } from "@effect/sql"
 import { SqlLive } from "./lib/db"
 
-/* TODOS
+/* 
+📋 TODO LIST - TICKET MANAGEMENT SYSTEM
+========================================
 
+✅ COMPLETED TASKS
+------------------
 - [X] Add a resolver for the `findById` query
 - [X] Add a resolver for the `findAll` query
-   # add offset and limit. Only tickets with parentId = null should be returned.
+  • Added offset and limit support
+  • Only tickets with parentId = null are returned (root tickets)
 - [X] Add a resolver for the `createTicket` mutation
 - [X] Add a resolver for the `toggleTicket` mutation
-- [ ] Add a resolver for the `deleteTicket` mutation
+- [X] Add a resolver for the `deleteTicket` mutation
+- [X] Implement parent/child relations in queries
+  • findAll and findById now return children as nested ticket lists
+  • Children are populated using BFS traversal (not part of DB model)
 
-- [X] Make sure the findAll and findById queries return the children aswell, not just the ticket itself. The children should be returned as a list of tickets but they are not part of the DB model
+🔄 REMAINING TASKS
+------------------
 
-- [X] Add parent/child relations
-  
+1. [ ] Add `setParentOfTicket` mutation resolver
+   • Purpose: Move a ticket to become a child of another ticket
+   • Implementation needed:
+     - Add input type: `SetParentInput { childId: ID!, parentId: ID! }`
+     - Add mutation to schema: `setParentOfTicket(input: SetParentInput!): Response!`
+     - Create resolver in mutations.ts using TicketService
+     - Add validation to prevent circular relationships
+     - Update repository to handle parentId changes
+   • Validation: Ensure no circular parent-child relationships are created
 
-- [ ] Add a resolver for the `setParentOfTicket` mutation
-    # the ticket with id: childId gets the ticket with id: parentId as its new parent
-- [ ] Add a resolver for the `removeParentFromTicket` mutation.
-    # the ticket with the given id becomes a root level ticket
-- [ ] Add a resolver for the `addChildrenToTicket` mutation.
-    # every children in childrenIds gets their parent set as parentId
+2. [ ] Add `removeParentFromTicket` mutation resolver
+   • Purpose: Convert a child ticket to a root-level ticket
+   • Implementation needed:
+     - Add input type: `RemoveParentInput { id: ID! }`
+     - Add mutation to schema: `removeParentFromTicket(input: RemoveParentInput!): Response!`
+     - Create resolver in mutations.ts using TicketService
+     - Update repository to set parentId to null
+   • Effect: Ticket becomes a root ticket (parentId = null)
 
+3. [ ] Add `addChildrenToTicket` mutation resolver
+   • Purpose: Add multiple tickets as children to a parent ticket
+   • Implementation needed:
+     - Add input type: `AddChildrenInput { parentId: ID!, childrenIds: [ID!]! }`
+     - Add mutation to schema: `addChildrenToTicket(input: AddChildrenInput!): Response!`
+     - Create resolver in mutations.ts using TicketService
+     - Use Effect.all for parallel processing of multiple children
+     - Update repository to handle batch parentId updates
+   • Performance: Use parallel processing with Effect.all for efficiency
+
+📝 IMPLEMENTATION NOTES
+----------------------
+• All new mutations should follow the same error handling pattern as existing ones
+• Use the existing TicketService and TicketRepository structure
+• Maintain consistent logging with emojis and descriptive messages
+• Add appropriate GraphQL schema types for new input/output types
+• Consider adding validation helpers in domain/ticket/helpers.ts
 */
 
 const baseSchema = makeExecutableSchema({ typeDefs, resolvers })

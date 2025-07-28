@@ -7,12 +7,23 @@ export const typeDefs = `#graphql
   type Mutation {
     createTicket(input: CreateTicketInput!): CreateTicketResponse!
     toggleTicket(input: ToggleTicketInput!): Response!
+    deleteTicket(id: ID!): DeleteTicketResponse!
   }
 
   type Response {
     success: Boolean!
     data: Ticket
     message: String
+  }
+
+  type DeleteTicketResponse {
+    success: Boolean!
+    data: [DeletedTicket!]
+    message: String
+  }
+
+  type DeletedTicket {
+    deletedId: ID!
   }
 
   type FindAllResponse {

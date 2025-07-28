@@ -1,21 +1,26 @@
 import { Effect } from "effect"
 import { Schema } from "@effect/schema"
-import { TicketService, CreateTicketInput, ToggleTicketInput } from "../../domain/ticket"
+import { TicketService, CreateTicketInput, ToggleTicketInput, DeleteTicketInput } from "../../domain/ticket"
 import { successResponse, errorResponse } from "../../lib/utils"
+import { HelperService } from "../../domain/ticket/helpers"
 
 export const mutations = {
   toggleTicket: (_: unknown, { input }: { input: unknown }) =>
     Effect.gen(function* () {
       const service = yield* TicketService
+      const helper = yield* HelperService
 
       const decoded = yield* Schema.decodeUnknown(ToggleTicketInput)(input)
-      yield* Effect.logInfo(`Toggling ticket with ID: ${decoded.id} to ${decoded.isCompleted}`)
+      yield* Effect.logInfo(`🔄 Toggling completion status for ticket ID: ${decoded.id} to ${decoded.isCompleted}`)
 
       return yield* service.toggleTicket(decoded).pipe(
-        Effect.map((ticket) => ({
-          message: `Updated ticket with ID ${ticket.id} to completed: ${ticket.completed} and all children`,
-          data: ticket,
-        })),
+        Effect.map((ticket) => {
+          const totalAffected = helper.getChildCount(ticket) + 1
+          return {
+            message: `✅ Updated completion status for "${ticket.title}" and ${totalAffected} child tickets to: ${decoded.isCompleted}`,
+            data: ticket,
+          }
+        }),
         Effect.andThen((result) => {
           return successResponse(result.data, result.message)
         })
@@ -26,23 +31,23 @@ export const mutations = {
       Effect.catchTags({
         ParseError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Parse error: ${error.message}`)
-            return yield* errorResponse(`Parse error: ${error.message}`)
+            yield* Effect.logError(`❌ Invalid toggle input format: ${error.message}`)
+            return yield* errorResponse(`Invalid toggle parameters. Please provide a valid ticket ID and completion status.`)
           }),
         TicketNotFoundError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Ticket not found: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`🔍 Ticket not found for toggle operation: ${error.message}`)
+            return yield* errorResponse(`Ticket not found. Cannot toggle completion status for non-existent ticket.`)
           }),
         TimeoutException: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Timeout: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`⏰ Toggle operation timeout after 2 seconds: ${error.message}`)
+            return yield* errorResponse(`Toggle operation took too long. The ticket tree might be too large.`)
           }),
         SqlError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`All retries failed due to SQL error: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`💾 Database error during toggle cascade: ${error.message}`)
+            return yield* errorResponse(`Database connection issue during toggle. Please try again later.`)
           }),
       })
     ),
@@ -51,10 +56,11 @@ export const mutations = {
       const service = yield* TicketService
 
       const decoded = yield* Schema.decodeUnknown(CreateTicketInput)(input)
-      yield* Effect.logInfo(`Creating ticket with title: ${decoded.title}`)
+      yield* Effect.logInfo(`🎯 Creating new ticket: "${decoded.title}"`)
+
       return yield* service.createTicket(decoded).pipe(
         Effect.map((ticket) => ({
-          message: `Created ticket with ID ${ticket.id}`,
+          message: `✅ Successfully created ticket "${ticket.title}" with ID: ${ticket.id}`,
           data: ticket,
         })),
         Effect.andThen((result) => {
@@ -67,23 +73,69 @@ export const mutations = {
       Effect.catchTags({
         ParseError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Parse error: ${error.message}`)
-            return yield* errorResponse(`Error parsing input: ${error.message}`)
+            yield* Effect.logError(`❌ Invalid ticket creation input: ${error.message}`)
+            return yield* errorResponse(`Invalid ticket data. Please provide a valid title and description.`)
           }),
         TicketCreationError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Ticket creation error: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`❌ Failed to create ticket in database: ${error.message}`)
+            return yield* errorResponse(`Failed to create ticket. Please check your input and try again.`)
           }),
         TimeoutException: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`Timeout: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`⏰ Ticket creation timeout after 2 seconds: ${error.message}`)
+            return yield* errorResponse(`Creation took too long. Please try again.`)
           }),
         SqlError: (error) =>
           Effect.gen(function* () {
-            yield* Effect.logError(`All retries failed due to SQL error: ${error.message}`)
-            return yield* errorResponse(error.message)
+            yield* Effect.logError(`💾 Database error during ticket creation: ${error.message}`)
+            return yield* errorResponse(`Database connection issue. Please try again later.`)
+          }),
+      })
+    ),
+  deleteTicket: (_: unknown, input: unknown) =>
+    Effect.gen(function* () {
+      const service = yield* TicketService
+
+      const decoded = yield* Schema.decodeUnknown(DeleteTicketInput)(input)
+      yield* Effect.logInfo(`🗑️  Initiating cascade delete for ticket ID: ${decoded.id}`)
+
+      return yield* service.deleteTicket(decoded.id).pipe(
+        Effect.map((deletedIds) => {
+          const totalDeleted = deletedIds.length
+          const childrenDeleted = totalDeleted - 1
+          return {
+            message: `🗑️  Successfully deleted ticket and ${childrenDeleted} child tickets (${totalDeleted} total tickets removed)`,
+            data: deletedIds,
+          }
+        }),
+        Effect.andThen((result) => {
+          return successResponse(result.data, result.message)
+        })
+      )
+    }).pipe(
+      Effect.retry({ times: 2, while: (e) => e._tag === "SqlError" }),
+      Effect.timeout("2 seconds"),
+      Effect.catchTags({
+        ParseError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`❌ Invalid delete input format: ${error.message}`)
+            return yield* errorResponse(`Invalid delete parameters. Please provide a valid ticket ID.`)
+          }),
+        TicketNotFoundError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`🔍 Ticket not found for deletion: ${error.message}`)
+            return yield* errorResponse(`Ticket not found. Cannot delete non-existent ticket.`)
+          }),
+        TimeoutException: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`⏰ Delete operation timeout after 2 seconds: ${error.message}`)
+            return yield* errorResponse(`Delete operation took too long. The ticket tree might be too large.`)
+          }),
+        SqlError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`💾 Database error during cascade delete: ${error.message}`)
+            return yield* errorResponse(`Database connection issue during delete. Please try again later.`)
           }),
       })
     ),
