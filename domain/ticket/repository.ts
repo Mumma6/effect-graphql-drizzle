@@ -65,6 +65,14 @@ export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket
       })
     }
 
+    const removeParent = (id: TicketId) => {
+      return Effect.gen(function* () {
+        const now = new Date()
+        const result = yield* db.update(tickets).set({ parentId: null, updatedAt: now }).where(eq(tickets.id, id)).returning()
+        return Option.fromNullable(result[0])
+      })
+    }
+
     return {
       findById,
       createTicket,
@@ -72,6 +80,7 @@ export class TicketRepository extends Effect.Service<TicketRepository>()("Ticket
       findAll,
       toggleTicket,
       findChildren,
+      removeParent,
     } as const
   }),
   dependencies: [DatabaseLive],

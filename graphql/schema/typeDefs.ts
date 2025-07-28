@@ -8,11 +8,18 @@ export const typeDefs = `#graphql
     createTicket(input: CreateTicketInput!): CreateTicketResponse!
     toggleTicket(input: ToggleTicketInput!): Response!
     deleteTicket(id: ID!): DeleteTicketResponse!
+    removeParentFromTicket(input: RemoveParentInput!): Response!
   }
 
   type Response {
     success: Boolean!
     data: Ticket
+    message: String
+  }
+
+  type FindAllResponse {
+    success: Boolean!
+    data: [Ticket!]!
     message: String
   }
 
@@ -24,12 +31,6 @@ export const typeDefs = `#graphql
 
   type DeletedTicket {
     deletedId: ID!
-  }
-
-  type FindAllResponse {
-    success: Boolean!
-    data: [Ticket!]!
-    message: String
   }
 
   input FindAllTicketsInput {
@@ -45,6 +46,10 @@ export const typeDefs = `#graphql
   input ToggleTicketInput {
     id: ID!
     isCompleted: Boolean!
+  }
+
+  input RemoveParentInput {
+    id: ID!
   }
 
   type Ticket {

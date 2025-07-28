@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { Schema } from "@effect/schema"
-import { TicketService, CreateTicketInput, ToggleTicketInput, DeleteTicketInput } from "../../domain/ticket"
+import { TicketService, CreateTicketInput, ToggleTicketInput, DeleteTicketInput, RemoveParentInput } from "../../domain/ticket"
 import { successResponse, errorResponse } from "../../lib/utils"
 import { HelperService } from "../../domain/ticket/helpers"
 
@@ -136,6 +136,55 @@ export const mutations = {
           Effect.gen(function* () {
             yield* Effect.logError(`💾 Database error during cascade delete: ${error.message}`)
             return yield* errorResponse(`Database connection issue during delete. Please try again later.`)
+          }),
+      })
+    ),
+  removeParentFromTicket: (_: unknown, { input }: { input: unknown }) =>
+    Effect.gen(function* () {
+      const service = yield* TicketService
+
+      const decoded = yield* Schema.decodeUnknown(RemoveParentInput)(input)
+      yield* Effect.logInfo(`🔄 Initiating parent removal for ticket ID: ${decoded.id}`)
+
+      return yield* service.removeParentFromTicket(decoded.id).pipe(
+        Effect.map((ticket) => {
+          const isAlreadyRoot = ticket.parentId === null
+          const message = isAlreadyRoot
+            ? `ℹ️  Ticket "${ticket.title}" (ID: ${ticket.id}) is already a root ticket`
+            : `✅ Successfully removed parent from ticket "${ticket.title}" (ID: ${ticket.id}). Ticket is now a root ticket.`
+
+          return {
+            message,
+            data: ticket,
+          }
+        }),
+        Effect.andThen((result) => {
+          return successResponse(result.data, result.message)
+        })
+      )
+    }).pipe(
+      Effect.retry({ times: 2, while: (e) => e._tag === "SqlError" }),
+      Effect.timeout("2 seconds"),
+      Effect.catchTags({
+        ParseError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`❌ Invalid remove parent input format: ${error.message}`)
+            return yield* errorResponse(`Invalid input parameters. Please provide a valid ticket ID.`)
+          }),
+        TicketNotFoundError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`🔍 Ticket not found for parent removal: ${error.message}`)
+            return yield* errorResponse(`Ticket not found. Cannot remove parent from non-existent ticket.`)
+          }),
+        TimeoutException: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`⏰ Parent removal timeout after 2 seconds: ${error.message}`)
+            return yield* errorResponse(`Parent removal took too long. Please try again.`)
+          }),
+        SqlError: (error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`💾 Database error during parent removal: ${error.message}`)
+            return yield* errorResponse(`Database connection issue during parent removal. Please try again later.`)
           }),
       })
     ),

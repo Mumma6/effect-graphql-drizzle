@@ -11,8 +11,7 @@ import { SqlLive } from "./lib/db"
 📋 TODO LIST - TICKET MANAGEMENT SYSTEM
 ========================================
 
-✅ COMPLETED TASKS
-------------------
+
 - [X] Add a resolver for the `findById` query
 - [X] Add a resolver for the `findAll` query
   • Added offset and limit support
@@ -24,8 +23,7 @@ import { SqlLive } from "./lib/db"
   • findAll and findById now return children as nested ticket lists
   • Children are populated using BFS traversal (not part of DB model)
 
-🔄 REMAINING TASKS
-------------------
+
 
 1. [ ] Add `setParentOfTicket` mutation resolver
    • Purpose: Move a ticket to become a child of another ticket
@@ -37,7 +35,7 @@ import { SqlLive } from "./lib/db"
      - Update repository to handle parentId changes
    • Validation: Ensure no circular parent-child relationships are created
 
-2. [ ] Add `removeParentFromTicket` mutation resolver
+2. [X] Add `removeParentFromTicket` mutation resolver
    • Purpose: Convert a child ticket to a root-level ticket
    • Implementation needed:
      - Add input type: `RemoveParentInput { id: ID! }`

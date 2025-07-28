@@ -148,12 +148,57 @@ export class TicketService extends Effect.Service<TicketService>()("Ticket/Servi
         return deletedIds
       })
 
+    const removeParentFromTicket = (id: TicketId) =>
+      Effect.gen(function* () {
+        yield* Effect.logInfo(`🔄 Checking parent removal for ticket ID: ${id}`)
+
+        // First check if ticket exists and get current state
+        const currentTicket = yield* repository.findById(id).pipe(
+          Effect.flatMap(
+            Option.match({
+              onNone: () =>
+                Effect.gen(function* () {
+                  yield* Effect.logWarning(`❌ Ticket not found with ID ${id} for parent removal`)
+                  return yield* Effect.fail(new TicketNotFoundError(`Failed to find ticket with ID ${id}`))
+                }),
+              onSome: Effect.succeed,
+            })
+          )
+        )
+
+        // Check if ticket is already a root ticket
+        if (currentTicket.parentId === null) {
+          yield* Effect.logInfo(`ℹ️  Ticket "${currentTicket.title}" (ID: ${currentTicket.id}) is already a root ticket`)
+          return currentTicket
+        }
+
+        // Remove parent
+        const updatedTicket = yield* repository.removeParent(id).pipe(
+          Effect.flatMap(
+            Option.match({
+              onNone: () =>
+                Effect.gen(function* () {
+                  yield* Effect.logWarning(`❌ Failed to remove parent from ticket with ID ${id}`)
+                  return yield* Effect.fail(new TicketNotFoundError(`Failed to remove parent from ticket with ID ${id}`))
+                }),
+              onSome: Effect.succeed,
+            })
+          )
+        )
+
+        yield* Effect.logInfo(
+          `✅ Successfully removed parent from ticket "${updatedTicket.title}" (ID: ${updatedTicket.id}). Ticket is now a root ticket.`
+        )
+        return updatedTicket
+      })
+
     return {
       findById,
       createTicket,
       findAll,
       deleteTicket,
       toggleTicket,
+      removeParentFromTicket,
     } as const
   }),
 

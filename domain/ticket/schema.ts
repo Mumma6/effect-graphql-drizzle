@@ -32,3 +32,7 @@ export const ToggleTicketInput = Schema.Struct({
 export const DeleteTicketInput = Schema.Struct({
   id: TicketIdSchema,
 })
+
+export const RemoveParentInput = Schema.Struct({
+  id: TicketIdSchema,
+})
